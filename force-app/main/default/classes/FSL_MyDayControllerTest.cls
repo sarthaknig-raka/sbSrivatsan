@@ -788,4 +788,52 @@ private class FSL_MyDayControllerTest {
         ];
         System.assertEquals(2, serials.size());
     }
+
+    // ─── TEST-08: searchInventoryProducts ────────────────────────────────
+
+    @IsTest
+    static void testSearchInventoryProducts_nameMatch() {
+        Schema.Location testLocation = [SELECT Id FROM Location WHERE Name = 'Test Van Stock' LIMIT 1];
+
+        Test.startTest();
+        List<FSL_MyDayController.ProductSearchResult> results =
+            FSL_MyDayController.searchInventoryProducts('Micro', testLocation.Id);
+        Test.stopTest();
+
+        System.assert(results.size() >= 1, 'Should return at least 1 result for name match');
+        System.assert(results[0].productName.contains('Microinverter'), 'Result productName should contain Microinverter');
+    }
+
+    @IsTest
+    static void testSearchInventoryProducts_codeMatch() {
+        Schema.Location testLocation = [SELECT Id FROM Location WHERE Name = 'Test Van Stock' LIMIT 1];
+
+        Test.startTest();
+        List<FSL_MyDayController.ProductSearchResult> results =
+            FSL_MyDayController.searchInventoryProducts('IQ8', testLocation.Id);
+        Test.stopTest();
+
+        System.assert(results.size() >= 1, 'Should return at least 1 result for code match');
+        Boolean foundIQ8 = false;
+        for (FSL_MyDayController.ProductSearchResult r : results) {
+            if (r.productCode == 'IQ8-72') {
+                foundIQ8 = true;
+                break;
+            }
+        }
+        System.assertEquals(true, foundIQ8, 'Should find product with code IQ8-72');
+    }
+
+    @IsTest
+    static void testSearchInventoryProducts_shortTerm() {
+        // Single-character term — method requires at least 2 chars, should return empty list
+        Schema.Location testLocation = [SELECT Id FROM Location WHERE Name = 'Test Van Stock' LIMIT 1];
+
+        Test.startTest();
+        List<FSL_MyDayController.ProductSearchResult> results =
+            FSL_MyDayController.searchInventoryProducts('I', testLocation.Id);
+        Test.stopTest();
+
+        System.assertEquals(0, results.size(), 'Should return 0 results for term shorter than 2 chars');
+    }
 }
